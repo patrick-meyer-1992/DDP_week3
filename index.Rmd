@@ -1,0 +1,60 @@
+---
+title: "Netflix History"
+author: "Patrick Meyer"
+date: "7 2 2021"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## R Markdown
+
+This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+## Slide with Bullets
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+## Slide with R Output
+
+```{r cars, echo = TRUE}
+
+library(aweek)
+library(plotly)
+netflix = read.csv("NetflixViewingHistory.csv")
+netflix = subset(x = netflix, subset = grepl(x = netflix$Title, pattern = ":"))
+
+netflix$days = substr(netflix$Date, start = 1, stop = 2)
+netflix$months = substr(netflix$Date, start = 4, stop = 5)
+netflix$years = paste("20", substr(netflix$Date, start = 7, stop = 8), sep = "")
+netflix$Date = as.Date(paste(netflix$years, "-", netflix$months, "-", netflix$days, sep = ""))
+netflix$week = date2week(netflix$Date)
+netflix$week = substr(netflix$week, start = 7, stop = 8)
+netflix$weekYear = paste(netflix$years, netflix$week, sep = "-")
+
+netflix = netflix[order(netflix$Date),]
+
+netflix$weeklyViews = 1
+
+#netflix$weeklyViews = numeric(nrow(netflix))
+#for (i in 1:nrow(netflix)) {
+#  netflix$weeklyViews[i] = sum(netflix$week == netflix$week[i] & netflix$years == netflix$years[i])
+#}
+
+
+```
+
+## Slide with Plot
+
+```{r pressure}
+p = plot_ly(data = netflix, x = ~weekYear, y = ~weeklyViews, type = "bar", name = "Netflix", color = ~years)
+#p = p %>% 
+p
+```
+
