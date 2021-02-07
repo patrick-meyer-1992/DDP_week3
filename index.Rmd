@@ -53,7 +53,7 @@ netflix$weeklyViews = 1
 ## Slide with Plot
 
 ```{r pressure}
-p = plot_ly(data = netflix, x = ~weekYear, y = ~weeklyViews, type = "bar", name = "Netflix", color = ~years)
+p = plot_ly(data = netflix, x = ~weekYear, y = ~Title, type = "bar", name = "Netflix", color = ~years)
 #p = p %>% 
 p
 ```
