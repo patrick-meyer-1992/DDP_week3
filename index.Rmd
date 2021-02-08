@@ -63,6 +63,7 @@ netflix$weeklyViews = 1
 
 # Slide with Plot
 
+
 ```{r pressure, warning=FALSE}
 p = plot_ly(data = netflix, x = ~weekYear, y = ~weeklyViews, type = "bar", orientation = "v", color = ~years)
 p = p %>% layout(xaxis = list(
