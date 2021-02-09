@@ -28,15 +28,24 @@ When you click the **Knit** button a document will be generated that includes bo
 library(stringr)
 library(aweek)
 library(plotly)
+library(tidyr)
+library(dplyr)
 #Import data
 netflix = read.csv("NetflixViewingHistory.csv", sep = ";")
-#Filter out movies (movies don't have the ':')
-netflix = subset(x = netflix, subset = grepl(x = netflix$Title, pattern = ":"))
+
 #Add zeros because stupid excel screwed up the dates
 netflix$Date = as.character(netflix$Date)
 netflix$Date = sapply(netflix$Date, FUN = 
                         function(x){if(nchar(x) < 6){x = paste("0", x, sep = "")}
                                       else{x = x}})
+
+#Break the title into 3 seperate columns with "Title of show", "Season", "Title of episode"
+netflix = separate(netflix, col = Title, into = c("Title", "Season", "Episode"), sep = ': ')
+
+#Exclude rows which are not in the proper format and are therefore likely now series
+netflix = netflix[-which(is.na(netflix$Episode)),]
+
+
 
 #Break up the Date-Column in separate columns
 netflix$days = substr(netflix$Date, start = 1, stop = 2)
@@ -46,12 +55,16 @@ netflix$Date = as.Date(paste(netflix$years, "-", netflix$months, "-", netflix$da
 netflix$week = date2week(netflix$Date)
 netflix$week = substr(netflix$week, start = 7, stop = 8)
 netflix$weekYear = paste(netflix$years, netflix$week, sep = "-")
-netflix$show = str_extract(string = netflix$Title, pattern = "[^:]+")
+
+
+netflixTitleCounts = count(netflix, Title)
+netflixTitleCounts= netflixTitleCounts[order(netflixTitleCounts$n, decreasing = T),]
+netflixTitleCounts$Title = factor(netflixTitleCounts$Title, levels = netflixTitleCounts$Title[order(netflixTitleCounts$n, decreasing = FALSE)])
 
 netflix = netflix[order(netflix$Date),]
-length(table(netflix$weekYear))
 
-netflix$weeklyViews = 1
+
+#netflix$weeklyViews = 1
 
 #netflix$weeklyViews = numeric(nrow(netflix))
 #for (i in 1:nrow(netflix)) {
@@ -64,7 +77,21 @@ netflix$weeklyViews = 1
 # Slide with Plot
 
 
-```{r pressure, warning=FALSE}
+```{r plot1, warning=FALSE}
+p = plot_ly(data = netflixTitleCounts[1:10,], x = ~n, y = ~Title, type = "bar", 
+            orientation = "h", marker = list(color = "rgba(229,9,20,1)")) %>%
+  layout(yaxis = list(title = list(standoff = 1), color = "white"), 
+         xaxis = list(color = "white"), 
+         plot_bgcolor = "rgba(0,0,0,1)", 
+         paper_bgcolor = "rgba(0,0,0,1)")
+
+p
+```
+
+# Slide with Plot
+
+
+```{r plot2, warning=FALSE,eval=FALSE}
 p = plot_ly(data = netflix, x = ~weekYear, y = ~weeklyViews, type = "bar", orientation = "v", color = ~years)
 p = p %>% layout(xaxis = list(
                   title = "Week",
