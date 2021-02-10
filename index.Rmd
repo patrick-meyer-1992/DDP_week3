@@ -1,5 +1,5 @@
 ---
-title: "Netflix History"
+title: "Netflix Viewing History"
 author: "Patrick Meyer"
 date: "7 2 2021"
 output: ioslides_presentation
@@ -9,27 +9,21 @@ output: ioslides_presentation
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## R Markdown
+## My Netflix Viewing History
 
-This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+This is a short presentation of my Netflix viewing habits from 03/2017 to 02/2021.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+Some of the ideas were inspired by
+https://towardsdatascience.com/explore-your-activity-on-netflix-with-r-how-to-analyze-and-visualize-your-viewing-history-e85792410706
 
-## Slide with Bullets
-
-- Bullet 1
-- Bullet 2
-- Bullet 3
-
-## Slide with R Output
-
-```{r cars, echo = TRUE}
+```{r data import, echo = FALSE, message=FALSE, warning=FALSE}
 
 library(stringr)
 library(aweek)
 library(plotly)
 library(tidyr)
 library(dplyr)
+
 #Import data
 netflix = read.csv("NetflixViewingHistory.csv", sep = ";")
 
@@ -45,8 +39,6 @@ netflix = separate(netflix, col = Title, into = c("Title", "Season", "Episode"),
 #Exclude rows which are not in the proper format and are therefore likely now series
 netflix = netflix[-which(is.na(netflix$Episode)),]
 
-
-
 #Break up the Date-Column in separate columns
 netflix$days = substr(netflix$Date, start = 1, stop = 2)
 netflix$months = substr(netflix$Date, start = 3, stop = 4)
@@ -55,50 +47,46 @@ netflix$Date = as.Date(paste(netflix$years, "-", netflix$months, "-", netflix$da
 netflix$week = date2week(netflix$Date)
 netflix$week = substr(netflix$week, start = 7, stop = 8)
 netflix$weekYear = paste(netflix$years, netflix$week, sep = "-")
-
-
-netflixTitleCounts = count(netflix, Title)
-netflixTitleCounts= netflixTitleCounts[order(netflixTitleCounts$n, decreasing = T),]
-netflixTitleCounts$Title = factor(netflixTitleCounts$Title, levels = netflixTitleCounts$Title[order(netflixTitleCounts$n, decreasing = FALSE)])
-
+#Order by Date
 netflix = netflix[order(netflix$Date),]
-
-
-#netflix$weeklyViews = 1
-
-#netflix$weeklyViews = numeric(nrow(netflix))
-#for (i in 1:nrow(netflix)) {
-#  netflix$weeklyViews[i] = sum(netflix$week == netflix$week[i] & netflix$years == netflix$years[i])
-#}
-
-
 ```
 
-# Slide with Plot
-
+## Plot of My 10 Most Watched Shows Since 03/2017
 
 ```{r plot1, warning=FALSE}
-p = plot_ly(data = netflixTitleCounts[1:10,], x = ~n, y = ~Title, type = "bar", 
+#Extract a data frame in which each Title from the base data frame is counted
+netflixTitleCounts = count(netflix, Title)
+netflixTitleCounts= netflixTitleCounts[order(netflixTitleCounts$n, decreasing = TRUE),]
+
+#Turn the title into a factor with defined order, so plot_ly can recognize this order instead of sorting alphabetically
+netflixTitleCounts$Title = factor(netflixTitleCounts$Title, levels = netflixTitleCounts$Title[order(netflixTitleCounts$n, decreasing = FALSE)])
+
+#Plot the ten most watched shows
+topten = plot_ly(data = netflixTitleCounts[1:10,], x = ~n, y = ~Title, type = "bar", 
             orientation = "h", marker = list(color = "rgba(229,9,20,1)")) %>%
   layout(yaxis = list(title = list(standoff = 1), color = "white"), 
-         xaxis = list(color = "white"), 
+         xaxis = list(color = "white", title = "Total Number of Views"),
+         title = list(text = "My 10 Most Watched Shows on Netflix Since 03/2017", font = list(color = "white")),
+         margin = list(t = 50),
          plot_bgcolor = "rgba(0,0,0,1)", 
          paper_bgcolor = "rgba(0,0,0,1)")
 
-p
+topten
 ```
 
-# Slide with Plot
+## Views per Day Over the Years
+
+You can zoom in to get a closer look at monthly/weekly/daily information. :)
 
 
-```{r plot2, warning=FALSE,eval=FALSE}
-p = plot_ly(data = netflix, x = ~weekYear, y = ~weeklyViews, type = "bar", orientation = "v", color = ~years)
-p = p %>% layout(xaxis = list(
-                  title = "Week",
-                  tickvals = netflix$weekYear,
-                  ticktext = substr(netflix$weekYear, start = 6, stop = 7),
-                  tickmode = "array"
-                  ))
-p
+```{r plot2}
+dailyEpisodes = count(netflix, Date)
+viewsPerDay = plot_ly(data = dailyEpisodes, x = ~Date, y = ~n, type = "bar", 
+                      marker = list(color = "rgba(229,9,20,1)"))  %>%
+    layout(yaxis = list(color = "white", title = "Views per Day"), 
+         xaxis = list(color = "white", title = "Date"),
+         title = list(text = "My Views Per Day on Netflix Since 03/2017", font = list(color = "white")),
+         plot_bgcolor = "rgba(0,0,0,1)", 
+         paper_bgcolor = "rgba(0,0,0,1)")
+viewsPerDay
 ```
-
